@@ -1,4 +1,5 @@
-stacks = {7}
+stacks = {}
+setmetatable(stacks, stacks)
 
 function DivideStack(_stackIndex, _splitSize)
     --_stackIndex is the selected stack from the table, stacks, to split.
