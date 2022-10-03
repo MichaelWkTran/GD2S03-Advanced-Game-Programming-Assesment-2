@@ -5,6 +5,16 @@ function Stacks.New()
     return setmetatable(Stacks, {})
 end
 
+function Stacks:Copy()
+    setmetatable(Stacks, newTable)
+
+    for i=0; #self
+        newTable[i] = self[i]
+    end
+
+    return newTable
+end
+
 function Stacks:DivideStack(_stackIndex, _splitSize)
     --_stackIndex is the selected stack from the table, stacks, to split.
     --_splitSize is the size of the first resulting stack once split.

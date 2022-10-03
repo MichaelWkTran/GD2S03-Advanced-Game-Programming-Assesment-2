@@ -15,18 +15,24 @@ int minimax(int depth, int nodeIndex, bool isMax, int scores[], int h)
     // leaf node is reached
     if (depth == h) return scores[nodeIndex];
 
-    //  If current move is maximizer,
-    // find the maximum attainable
-    // value
+    //If current move is maximizer, find the maximum attainable
     if (isMax)
-        return fmaxf(minimax(depth + 1, nodeIndex * 2, false, scores, h),
-            minimax(depth + 1, nodeIndex * 2 + 1, false, scores, h));
-
-    // Else (If current move is Minimizer), find the minimum
-    // attainable value
+    {
+        return max
+        (
+            minimax(depth + 1, nodeIndex * 2, false, scores, h),
+            minimax(depth + 1, nodeIndex * 2 + 1, false, scores, h)
+        );
+    }
+    //If current move is minimizer, find the minimum attainable value
     else
-        return fmaxf(minimax(depth + 1, nodeIndex * 2, true, scores, h),
-            minimax(depth + 1, nodeIndex * 2 + 1, true, scores, h));
+    {
+        return min
+        (
+            minimax(depth + 1, nodeIndex * 2, true, scores, h),
+            minimax(depth + 1, nodeIndex * 2 + 1, true, scores, h)
+        );
+    }
 }
 
 // A utility function to find Log n in base 2
