@@ -1,5 +1,5 @@
 Stacks = {7}
-Stacks.__index = Stacks;
+Stacks.__index = Stacks
 
 function Stacks.New()
     return setmetatable(Stacks, {})
@@ -8,7 +8,7 @@ end
 function Stacks:Copy()
     setmetatable(Stacks, newTable)
 
-    for i=0; #self
+    for i=0, #self
         newTable[i] = self[i]
     end
 

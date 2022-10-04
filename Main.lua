@@ -1,5 +1,8 @@
 Stacks = require("Stacks")
+require("MiniMax")
+
 stack = Stacks.New()
+isPlayerTurn = true
 
 function PlayerTurn()
     print("Each line is a stack. The number on the left is the stack index and the number on the right is its value ([Index] : [Value]). \n")
@@ -68,6 +71,19 @@ function PlayerTurn()
     end
 end
 
+gameTree = {}
 function EnemyTurn()
-    
+    --The gameTree contains the score for every move the player and the CPU can make.
+    --It is ordered 
+
+    --[[
+                [7]
+           /     |      \
+        [1, 6] [2, 5] [3, 4]
+       [1, 1, 5] [1, 2, 4] [1, 3, 3] []
+    ]]
+   
+    MiniMax(gameTree, true, -math.huge, math.huge)
+   
+   
 end
