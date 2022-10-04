@@ -8,7 +8,7 @@ end
 function Stacks:Copy()
     setmetatable(Stacks, newTable)
 
-    for i=0, #self
+    for i=0, #self do
         newTable[i] = self[i]
     end
 
