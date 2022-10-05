@@ -1,21 +1,29 @@
+--[[
+Issues:
+    --All objects created from Stacks share the same data instead of containing individual data
+    --How do I flush the input buffer
+]]
+
 Stacks = require("Stacks")
-stack = Stacks.New()
+stacks = Stacks.New()
+
+function Stacks:Print()
+    print("Index : Size")
+    for i=1, #self do
+        print(i .. "     : " .. self[i])
+    end
+end
 
 function PlayerTurn()
     ::SELECT_INDEX::
     
-    os.execute("cls")
     print("Each line is a stack. The number on the left is the stack index and the number on the right is its value ([Index] : [Value]). \n")
     
     --Print the stacks
-    print("Index : Size")
-    for i=1, #stack do
-        print(i .. "     : " .. stack[i])
-    end
+    stacks:Print()
     print("")
 
     --Select the stack to split
-    
     print("Type the index of the stack you want to modify and press ENTER to select that stack")
 
     local stackIndex = 0
@@ -28,14 +36,17 @@ function PlayerTurn()
         --Check whether the chosen index is an integer  
         if stackIndex == nil then
             print("\nThe written index must be an integer")
-            ios.execute
             foundIndex = false
         elseif math.floor(stackIndex) ~= stackIndex then
             print("\nThe written index must be an integer")
             foundIndex = false
         --Check whether the index is not out of bounds
-        elseif stack[stackIndex] == nil then
+        elseif stacks[stackIndex] == nil then
             print("\nThere are no stacks with the given index")
+            foundIndex = false
+        --Check whether the chosen stack can be split
+        elseif stacks[stackIndex] <= 2 then
+            print("\nThe size of the chosen stack must be larger than two")
             foundIndex = false
         end
 
@@ -70,74 +81,58 @@ function PlayerTurn()
 
         --Split the stack
         if foundSize then
-            if stack:DivideStack(stackIndex, splitSize) == false then
-                print("\nThe size of the split stack must be from 1 to the size of the chosen stack\n")
+            if not stacks:DivideStack(stackIndex, splitSize) then
+                print("\nThe size of the split stack must be larger than 1, but smaller than the size of the chosen stack")
                 foundSize = false
             end
         end
 
         if foundSize then break end
     end
+
+    print("")
 end
 
-gameTree = {}
 function EnemyTurn()
-    function MiniMax(_stacks, _isMax, _alpha--[[ = -math.huge]], _beta--[[ = math.huge]])
+    function Stacks:MiniMax(_isMax, _alpha--[[ = -math.huge]], _beta--[[ = math.huge]])
         --If terminal state or leaf node is reached
-        if _stacks:DividableStacksRemaining() == false then
+        if self:DividableStacksRemaining() <= 0 then
             if _isMax then return 1 else return 0 end
         end
-    
-        --If current move is maximizer, find the maximum attainable value
-        if _isMax then
-            local bestVal = -math.huge
-    
-            --Select the stack to split
-            for stackIndex=1, #_stacks do
-                --Select the size of the stack to split
-                for splitSize=1, _stacks[stackIndex] do
-                    --Copy and divide the stored stack
-                    local newStacks = _stacks:Copy()
-                    newStacks:DivideStack(stackIndex, splitSize)
-    
-                    --Find the best value from the children below
-                    local value = MiniMax(newStacks, true, _alpha, _beta)
-                    bestVal = math.max(bestVal, value)
-                
-                    --Alpha Beta Pruning
-                    _alpha = math.max(_alpha, bestVal)
-                    if _beta <= _alpha then break end
+
+        --Set the initial best value to math.huge if _isMax is true and if false set it to -math.huge
+        local bestVal = math.huge;
+        if _isMax then bestVal = -1 * bestVal; end
+
+        --Select the stack to split
+        for stackIndex=1, #self do
+            --Select the size of the stack to split
+            for splitSize=1, self[stackIndex] do
+                --Copy and divide the stored stack
+                local newStacks = self:Copy()
+                if not newStacks:DivideStack(stackIndex, splitSize) then
+                    goto SKIP_MOVE
                 end
+
+                --Find the best value from the children below
+                local value = newStacks:MiniMax(not _isMax, _alpha, _beta)
+
+                --If _isMax is true, set bestVal to the maximum score,
+                --otherwise set it to the minimum score found
+                if _isMax then bestVal = math.max(bestVal, value)
+                else bestVal = math.min(bestVal, value) end
+
+                --Alpha Beta Pruning
+                if _isMax then _alpha = math.max(_alpha, bestVal)
+                else _beta = math.min(_beta, bestVal) end
+
+                if _beta <= _alpha then break end
+
+                ::SKIP_MOVE::
             end
-    
-            --Return the best maximizer
-            return bestVal
-    
-        --If current move is minimizer, find the minimum attainable value
-        else
-            local bestVal = math.huge
-    
-            --Select the stack to split
-            for stackIndex=1, #_stacks do
-                --Select the size of the stack to split
-                for splitSize=1, _stacks[stackIndex] do
-                    --Copy and divide the stored stack
-                    local newStacks = _stacks:Copy()
-                    newStacks:DivideStack(stackIndex, splitSize)
-                
-                    --Find the best value from the children below
-                    local value = MiniMax(newStacks, false, _alpha, _beta)
-                    bestVal = math.min(bestVal, value)
-                
-                    --Alpha Beta Pruning
-                    _alpha = math.min(_beta, bestVal)
-                    if _beta <= _alpha then break end
-                end
-            end
-    
-            --Return the best minimizer
-            return bestVal
         end
+
+        return bestVal
     end
    
     --Find the best move
@@ -147,29 +142,29 @@ function EnemyTurn()
     --Select the stack to split
     for stackIndex=1, #stacks do
         --Select the size of the stack to split
-        for splitSize=1, stacks[stackIndex] do
+        for splitSize=1, stacks[stackIndex]/2 do
             --Create new stacks with the split done
             local newStacks = stacks:Copy()
-            newStacks:DivideStack(stackIndex, splitSize)
+            if newStacks:DivideStack(stackIndex, splitSize) then
+                --Compute the evaluation for the move
+                local moveVal = newStacks:MiniMax(true, -math.huge, math.huge)
 
-            --Compute the evaluation for the move
-            local moveVal = MiniMax(newStacks, true, -math.huge, math.huge)
-
-            --If the moveVal of the current move is better than bestVal, update bestVal
-            if (moveVal > bestVal) then
-                bestMove[0] = stackIndex
-                bestMove[1] = splitSize
-                bestVal = moveVal
+                --If the moveVal of the current move is better than bestVal, update bestVal
+                if (moveVal > bestVal) then
+                    bestMove[1] = stackIndex
+                    bestMove[2] = splitSize
+                    bestVal = moveVal
+                end
             end
         end
     end
 
     --Make the move
-    stack:DivideStack(bestMove[0], bestMove[1])
+    stacks:DivideStack(bestMove[1], bestMove[2])
 end
 
 isPlayerTurn = true
-while stack:DividableStacksRemaining() do
+while stacks:DividableStacksRemaining() > 0 do
     if isPlayerTurn then PlayerTurn()
     else EnemyTurn() end
 
@@ -177,3 +172,9 @@ while stack:DividableStacksRemaining() do
     if isPlayerTurn then isPlayerTurn = false
     else isPlayerTurn = true end
 end
+
+--Show whether the player won or lost
+if isPlayerTurn then print("\nYou Lose\n")
+else print("\nYou Win\n") end
+
+stacks:Print()
