@@ -7,6 +7,13 @@ Issues:
 Stacks = require("Stacks")
 stacks = Stacks.New()
 
+turnNumber = 0
+--Prints a message showing how many turns are played in the game
+function PrintTurn()
+    print("Turn " .. turnNumber .. "----------------------------------")
+end
+
+--Prints the stacks in a Stacks object
 function Stacks:Print()
     print("Index : Size")
     for i=1, #self do
@@ -14,9 +21,15 @@ function Stacks:Print()
     end
 end
 
+--Split a Stacks object based on the player's inputs
 function PlayerTurn()
     ::SELECT_INDEX::
     
+    --Print turn number
+    turnNumber = turnNumber + 1
+    PrintTurn()
+    
+    --Print input intstruction
     print("Each line is a stack. The number on the left is the stack index and the number on the right is its value ([Index] : [Value]). \n")
     
     --Print the stacks
@@ -36,6 +49,7 @@ function PlayerTurn()
         --Check whether the chosen index is an integer  
         if stackIndex == nil then
             print("\nThe written index must be an integer")
+            local flush = io.read()
             foundIndex = false
         elseif math.floor(stackIndex) ~= stackIndex then
             print("\nThe written index must be an integer")
@@ -70,9 +84,10 @@ function PlayerTurn()
             goto SELECT_INDEX
         end
 
-        --Check whether the size is an integer--Check whether the chosen index is an integer  
+        --Check whether the chosen size is an integer  
         if splitSize == nil then
             print("\nThe size of the split stack must be an integer")
+            local flush = io.read()
             foundSize = false
         elseif math.floor(splitSize) ~= splitSize then
             print("\nThe size of the split stack must be an integer")
@@ -93,7 +108,9 @@ function PlayerTurn()
     print("")
 end
 
+--Split a Stacks object based on the computer player's inputs
 function EnemyTurn()
+    --Calcuate a score for a potential move done by the computer
     function Stacks:MiniMax(_isMax, _alpha--[[ = -math.huge]], _beta--[[ = math.huge]])
         --If terminal state or leaf node is reached
         if self:DividableStacksRemaining() <= 0 then
@@ -107,28 +124,25 @@ function EnemyTurn()
         --Select the stack to split
         for stackIndex=1, #self do
             --Select the size of the stack to split
-            for splitSize=1, self[stackIndex] do
-                --Copy and divide the stored stack
+            for splitSize=1, self[stackIndex]/2 do
+                --Copy and divide the stored stack.
+                --Skip this iteration of the chosen stack can not be divided
                 local newStacks = self:Copy()
-                if not newStacks:DivideStack(stackIndex, splitSize) then
-                    goto SKIP_MOVE
+                if newStacks:DivideStack(stackIndex, splitSize) then
+                    --Find the best value from the children below
+                    local value = newStacks:MiniMax(not _isMax, _alpha, _beta)
+
+                    --If _isMax is true, set bestVal to the maximum score,
+                    --otherwise set it to the minimum score found
+                    if _isMax then bestVal = math.max(bestVal, value)
+                    else bestVal = math.min(bestVal, value) end
+
+                    --Alpha Beta Pruning
+                    if _isMax then _alpha = math.max(_alpha, bestVal)
+                    else _beta = math.min(_beta, bestVal) end
+
+                    if _beta <= _alpha then break end
                 end
-
-                --Find the best value from the children below
-                local value = newStacks:MiniMax(not _isMax, _alpha, _beta)
-
-                --If _isMax is true, set bestVal to the maximum score,
-                --otherwise set it to the minimum score found
-                if _isMax then bestVal = math.max(bestVal, value)
-                else bestVal = math.min(bestVal, value) end
-
-                --Alpha Beta Pruning
-                if _isMax then _alpha = math.max(_alpha, bestVal)
-                else _beta = math.min(_beta, bestVal) end
-
-                if _beta <= _alpha then break end
-
-                ::SKIP_MOVE::
             end
         end
 
@@ -137,13 +151,14 @@ function EnemyTurn()
    
     --Find the best move
     local bestVal = -math.huge
-    local bestMove = {0, 0}
+    local bestMove = {1, 0}
 
     --Select the stack to split
     for stackIndex=1, #stacks do
         --Select the size of the stack to split
         for splitSize=1, stacks[stackIndex]/2 do
             --Create new stacks with the split done
+            --Skip this iteration of the chosen stack can not be divided
             local newStacks = stacks:Copy()
             if newStacks:DivideStack(stackIndex, splitSize) then
                 --Compute the evaluation for the move
@@ -165,6 +180,7 @@ end
 
 isPlayerTurn = true
 while stacks:DividableStacksRemaining() > 0 do
+    --Perform the Player or Enemy turn
     if isPlayerTurn then PlayerTurn()
     else EnemyTurn() end
 
@@ -173,8 +189,11 @@ while stacks:DividableStacksRemaining() > 0 do
     else isPlayerTurn = true end
 end
 
+--Print turn number
+PrintTurn()
+
 --Show whether the player won or lost
-if isPlayerTurn then print("\nYou Lose\n")
-else print("\nYou Win\n") end
+if isPlayerTurn then print("You Lose\n")
+else print("You Win\n") end
 
 stacks:Print()

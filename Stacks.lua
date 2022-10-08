@@ -1,26 +1,25 @@
 Stacks = {7}
 Stacks.__index = Stacks
 
+--Creates a new object from the Stacks class
 function Stacks.New()
-    return setmetatable(Stacks, {})
+    return Stacks:Copy()
 end
 
+--Creates a new object with data copied from another Stacks object
 function Stacks:Copy()
-    --local copy = Stacks:New()
---
-    --for i=1, #self do
-    --    copy[i] = self[i]
-    --end
---
+    --local copy = Stacks.New()
+    local copy = {}
+
+    for i=1, #self do
+        copy[i] = self[i]
+    end
+
     --return copy
-
-    local copy = Stacks:New()
-    
-    for key, value in pairs(self) do copy[key] = value end
-
-    return copy
+    return setmetatable(copy, Stacks)
 end
 
+--Split a stack a Stacks object. 
 function Stacks:DivideStack(_stackIndex, _splitSize)
     --_stackIndex is the selected stack from the table, stacks, to split.
     --_splitSize is the size of the first resulting stack once split.
@@ -44,6 +43,7 @@ function Stacks:DivideStack(_stackIndex, _splitSize)
     return true
 end
 
+--Check whether there are remaining stacks in the Stacks object that can be split
 function Stacks:DividableStacksRemaining()
     local dividableStacksRemaining = 0
     
